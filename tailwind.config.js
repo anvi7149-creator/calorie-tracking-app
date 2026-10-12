@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -12,7 +12,7 @@ module.exports = {
         danger: '#C94F4F'
       },
       boxShadow: {
-        soft: '0 10px 30px rgba(38, 58, 48, 0.08)'
+        soft: '0 10px 30px rgba(30, 50, 41, 0.08)'
       }
     }
   },
