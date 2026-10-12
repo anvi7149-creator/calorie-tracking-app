@@ -1,81 +1,143 @@
-import React, { useMemo, useState } from 'react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid } from 'recharts';
-import { getDailySummary, getWeeklyTrend } from '../data';
-import { FoodLog, UserProfile } from '../types';
+import React from 'react';
+import { Settings, Heart, Lock, LogOut, Flame, Download, Trash2, ChevronRight } from 'lucide-react';
+import { UserProfile, FoodLog } from '../types';
 
-export function ProgressPage({ user, logs }: { user: UserProfile; logs: FoodLog[] }) {
-  const [period, setPeriod] = useState<'Daily' | 'Weekly' | 'Monthly'>('Weekly');
-  const data = useMemo(() => {
-    if (period === 'Daily') {
-      return logs.slice(-7).map((log) => ({ label: log.date, calories: log.calories }));
-    }
-    return getWeeklyTrend(logs, user.dailyTarget);
-  }, [logs, period, user.dailyTarget]);
-
-  const avgCalories = useMemo(() => {
-    if (logs.length === 0) return 0;
-    const total = logs.reduce((sum, log) => sum + log.calories, 0);
-    return Math.round(total / logs.length);
-  }, [logs]);
-
-  const consistency = useMemo(() => {
-    const uniqueDates = new Set(logs.map((log) => log.date));
-    return uniqueDates.size ? Math.min((uniqueDates.size / 30) * 100, 100) : 0;
-  }, [logs]);
+export function ProfilePage({
+  user,
+  onUpdateUser,
+  logs,
+  onClearLogs
+}: {
+  user: UserProfile;
+  onUpdateUser: (next: Partial<UserProfile>) => void;
+  logs: FoodLog[];
+  onClearLogs: () => void;
+}) {
+  const handleLogout = () => {
+    window.localStorage.clear();
+    window.location.href = '/';
+  };
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-soft">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-soft">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-mint text-2xl font-bold text-forest">
+            {user.name?.slice(0, 1).toUpperCase()}
+          </div>
           <div>
-            <div className="text-xs uppercase tracking-[0.12em] text-muted">Progress</div>
-            <h1 className="text-2xl font-bold text-ink">Nutrition history</h1>
-          </div>
-          <div className="flex rounded-full border border-slate-200 bg-slate-100 p-1">
-            {['Daily', 'Weekly', 'Monthly'].map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setPeriod(option as 'Daily' | 'Weekly' | 'Monthly')}
-                className={`rounded-full px-3 py-2 text-sm font-medium ${period === option ? 'bg-white text-ink shadow-sm' : 'text-slate-600'}`}
-              >
-                {option}
-              </button>
-            ))}
+            <h1 className="text-2xl font-bold text-ink">{user.name}</h1>
+            <p className="text-sm text-slate-600">{user.email}</p>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="text-sm text-muted">Average daily intake</div>
-          <div className="mt-2 text-3xl font-bold text-ink">{avgCalories} kcal</div>
+      <div className="rounded-[32px] border border-slate-200 bg-white shadow-soft">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <div className="text-lg font-semibold text-ink">Profile details</div>
         </div>
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="text-sm text-muted">Food log consistency</div>
-          <div className="mt-2 text-3xl font-bold text-ink">{Math.round(consistency)}%</div>
-        </div>
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="text-sm text-muted">Weekly target</div>
-          <div className="mt-2 text-3xl font-bold text-ink">{user.dailyTarget * 7} kcal</div>
+        <div className="space-y-1 p-6">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Name</span>
+            <span className="font-medium text-ink">{user.name}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Age</span>
+            <span className="font-medium text-ink">{user.age}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Height</span>
+            <span className="font-medium text-ink">{user.height} {user.unitPreference === 'metric' ? 'cm' : 'in'}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Current weight</span>
+            <span className="font-medium text-ink">{user.currentWeight} {user.unitPreference === 'metric' ? 'kg' : 'lb'}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Activity level</span>
+            <span className="font-medium text-ink">{user.activityLevel}</span>
+          </div>
         </div>
       </div>
 
-      <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-soft">
-        <div className="mb-4 text-lg font-semibold text-ink">Calorie trend</div>
-        <div className="h-72">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="day" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="calories" fill="#237A57" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+      <div className="rounded-[32px] border border-slate-200 bg-white shadow-soft">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <div className="text-lg font-semibold text-ink">Nutrition goals</div>
+        </div>
+        <div className="space-y-1 p-6">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Daily target</span>
+            <span className="font-medium text-ink">{user.dailyTarget} kcal</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Protein target</span>
+            <span className="font-medium text-ink">{user.macroTargets.protein} g</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Carbs target</span>
+            <span className="font-medium text-ink">{user.macroTargets.carbs} g</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Fat target</span>
+            <span className="font-medium text-ink">{user.macroTargets.fat} g</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[32px] border border-slate-200 bg-white shadow-soft">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <div className="text-lg font-semibold text-ink">Preferences</div>
+        </div>
+        <div className="space-y-1 p-6">
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Units</span>
+            <span className="font-medium text-ink">{user.unitPreference === 'metric' ? 'kg/cm' : 'lb/in'}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Theme</span>
+            <span className="font-medium text-ink">{user.theme}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+            <span className="text-slate-700">Privacy</span>
+            <span className="font-medium text-ink">{user.privacy}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[32px] border border-slate-200 bg-white shadow-soft">
+        <div className="border-b border-slate-200 px-6 py-4">
+          <div className="text-lg font-semibold text-ink">Data & account</div>
+        </div>
+        <div className="space-y-1 p-6">
+          <button className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left hover:bg-slate-100">
+            <div className="flex items-center gap-3">
+              <Download className="h-4 w-4 text-slate-600" />
+              <span className="text-slate-700">Export my data</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-400" />
+          </button>
+          <button
+            onClick={onClearLogs}
+            className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left hover:bg-slate-100"
+          >
+            <div className="flex items-center gap-3">
+              <Trash2 className="h-4 w-4 text-slate-600" />
+              <span className="text-slate-700">Clear all food logs</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-400" />
+          </button>
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-4 py-3 text-left hover:bg-slate-100"
+          >
+            <div className="flex items-center gap-3">
+              <LogOut className="h-4 w-4 text-slate-600" />
+              <span className="text-slate-700">Log out</span>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-400" />
+          </button>
         </div>
       </div>
     </div>
   );
 }
-
